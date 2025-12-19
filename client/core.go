@@ -138,16 +138,20 @@ func (c *core) execFunc() (*Response, error) {
 
 // preHooks runs all request hooks before sending the request.
 func (c *core) preHooks() error {
-	c.client.mu.Lock()
-	defer c.client.mu.Unlock()
+	c.client.mu.RLock()
+	userHooks := make([]RequestHook, len(c.client.userRequestHooks))
+	copy(userHooks, c.client.userRequestHooks)
+	builtinHooks := make([]RequestHook, len(c.client.builtinRequestHooks))
+	copy(builtinHooks, c.client.builtinRequestHooks)
+	c.client.mu.RUnlock()
 
-	for _, f := range c.client.userRequestHooks {
+	for _, f := range userHooks {
 		if err := f(c.client, c.req); err != nil {
 			return err
 		}
 	}
 
-	for _, f := range c.client.builtinRequestHooks {
+	for _, f := range builtinHooks {
 		if err := f(c.client, c.req); err != nil {
 			return err
 		}
@@ -158,16 +162,20 @@ func (c *core) preHooks() error {
 
 // afterHooks runs all response hooks after receiving the response.
 func (c *core) afterHooks(resp *Response) error {
-	c.client.mu.Lock()
-	defer c.client.mu.Unlock()
+	c.client.mu.RLock()
+	builtinHooks := make([]ResponseHook, len(c.client.builtinResponseHooks))
+	copy(builtinHooks, c.client.builtinResponseHooks)
+	userHooks := make([]ResponseHook, len(c.client.userResponseHooks))
+	copy(userHooks, c.client.userResponseHooks)
+	c.client.mu.RUnlock()
 
-	for _, f := range c.client.builtinResponseHooks {
+	for _, f := range builtinHooks {
 		if err := f(c.client, resp, c.req); err != nil {
 			return err
 		}
 	}
 
-	for _, f := range c.client.userResponseHooks {
+	for _, f := range userHooks {
 		if err := f(c.client, resp, c.req); err != nil {
 			return err
 		}
@@ -182,8 +190,13 @@ func (c *core) timeout() context.CancelFunc {
 
 	if c.req.timeout > 0 {
 		c.ctx, cancel = context.WithTimeout(c.ctx, c.req.timeout)
-	} else if c.client.timeout > 0 {
-		c.ctx, cancel = context.WithTimeout(c.ctx, c.client.timeout)
+	} else {
+		c.client.mu.RLock()
+		timeout := c.client.timeout
+		c.client.mu.RUnlock()
+		if timeout > 0 {
+			c.ctx, cancel = context.WithTimeout(c.ctx, timeout)
+		}
 	}
 
 	return cancel

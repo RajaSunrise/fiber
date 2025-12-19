@@ -73,10 +73,12 @@ func parserRequestURL(c *Client, req *Request) error {
 	// Split URL into path and query parts using Cut (avoids allocation)
 	uri, queryPart, _ := strings.Cut(req.url, "?")
 
+	c.mu.RLock()
 	// If the URL doesn't start with http/https, prepend the baseURL.
 	if !protocolCheck.MatchString(uri) {
 		uri = c.baseURL + uri
 		if !protocolCheck.MatchString(uri) {
+			c.mu.RUnlock()
 			return ErrURLFormat
 		}
 	}
@@ -88,6 +90,7 @@ func parserRequestURL(c *Client, req *Request) error {
 	for key, val := range c.path.All() {
 		uri = strings.ReplaceAll(uri, ":"+key, val)
 	}
+	c.mu.RUnlock()
 
 	// Set the URI in the raw request.
 	disablePathNormalizing := c.DisablePathNormalizing() || req.DisablePathNormalizing()
@@ -104,9 +107,11 @@ func parserRequestURL(c *Client, req *Request) error {
 
 	args.Parse(queryOnly)
 
+	c.mu.RLock()
 	for key, value := range c.params.All() {
 		args.AddBytesKV(key, value)
 	}
+	c.mu.RUnlock()
 	for key, value := range req.params.All() {
 		args.AddBytesKV(key, value)
 	}
@@ -123,10 +128,12 @@ func parserRequestHeader(c *Client, req *Request) error {
 	// Set HTTP method.
 	req.RawRequest.Header.SetMethod(req.Method())
 
+	c.mu.Lock()
 	// Merge headers from the client.
 	for key, value := range c.header.All() {
 		req.RawRequest.Header.AddBytesKV(key, value)
 	}
+	c.mu.Unlock()
 
 	// Merge headers from the request.
 	for key, value := range req.header.All() {
@@ -159,6 +166,7 @@ func parserRequestHeader(c *Client, req *Request) error {
 		// noBody or rawBody do not require special handling here.
 	}
 
+	c.mu.RLock()
 	// Set User-Agent header.
 	req.RawRequest.Header.SetUserAgent(defaultUserAgent)
 	if c.userAgent != "" {
@@ -183,6 +191,7 @@ func parserRequestHeader(c *Client, req *Request) error {
 	for key, val := range c.cookies.All() {
 		req.RawRequest.Header.SetCookie(key, val)
 	}
+	c.mu.RUnlock()
 
 	// Set cookies from the request.
 	for key, val := range req.cookies.All() {
@@ -196,19 +205,28 @@ func parserRequestHeader(c *Client, req *Request) error {
 func parserRequestBody(c *Client, req *Request) error {
 	switch req.bodyType {
 	case jsonBody:
-		body, err := c.jsonMarshal(req.body)
+		c.mu.RLock()
+		marshal := c.jsonMarshal
+		c.mu.RUnlock()
+		body, err := marshal(req.body)
 		if err != nil {
 			return err
 		}
 		req.RawRequest.SetBody(body)
 	case xmlBody:
-		body, err := c.xmlMarshal(req.body)
+		c.mu.RLock()
+		marshal := c.xmlMarshal
+		c.mu.RUnlock()
+		body, err := marshal(req.body)
 		if err != nil {
 			return err
 		}
 		req.RawRequest.SetBody(body)
 	case cborBody:
-		body, err := c.cborMarshal(req.body)
+		c.mu.RLock()
+		marshal := c.cborMarshal
+		c.mu.RUnlock()
+		body, err := marshal(req.body)
 		if err != nil {
 			return err
 		}
