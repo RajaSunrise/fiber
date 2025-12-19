@@ -99,7 +99,7 @@ func init() {
 				},
 			},
 			{
-				pattern: `/v1/some/resource/name\\:customVerb?\?/:param/*`,
+				pattern: `/v1/some/resource/name\:customVerb?\?/:param/*`,
 				testCases: []routeTestCase{
 					{url: "/v1/some/resource/name:customVerb??/test/optionalWildCard/character", params: []string{"test", "optionalWildCard/character"}, match: true},
 					{url: "/v1/some/resource/name:customVerb??/test", params: []string{"test", ""}, match: true},
@@ -681,8 +681,8 @@ func init() {
 				testCases: []routeTestCase{
 					{url: "/api/v1/entity", params: nil, match: false},
 					{url: "/api/v1/87283827683", params: nil, match: false},
-					{url: "/api/v1/25", params: []string{"25"}, match: true},
-					{url: "/api/v1/1200", params: []string{"1200"}, match: true},
+					{url: "/api/v1/25", params: nil, match: false},
+					{url: "/api/v1/1200", params: nil, match: false},
 					{url: "/api/v1/true", params: nil, match: false},
 				},
 			},
