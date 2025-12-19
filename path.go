@@ -562,6 +562,9 @@ func findParamLen(s string, segment *routeSegment) int {
 
 	if len(segment.ComparePart) == 1 {
 		if constPosition := strings.IndexByte(s, segment.ComparePart[0]); constPosition != -1 {
+			if !segment.IsGreedy && strings.IndexByte(s[:constPosition], slashDelimiter) != -1 {
+				return 0
+			}
 			return constPosition
 		}
 	} else if constPosition := strings.Index(s, segment.ComparePart); constPosition != -1 {
