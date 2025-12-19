@@ -633,14 +633,8 @@ func RemoveEscapeChar(word string) string {
 	// Slow path: copy and remove escape characters
 	b := []byte(word)
 	dst := escapeIdx
-	for src := escapeIdx; src < len(b); src++ {
-		if b[src] == '\\' {
-			if src+1 < len(b) {
-				b[dst] = b[src+1]
-				dst++
-				src++
-			}
-		} else {
+	for src := escapeIdx + 1; src < len(b); src++ {
+		if b[src] != '\\' {
 			b[dst] = b[src]
 			dst++
 		}
@@ -651,14 +645,8 @@ func RemoveEscapeChar(word string) string {
 // RemoveEscapeCharBytes removes escape characters
 func RemoveEscapeCharBytes(word []byte) []byte {
 	dst := 0
-	for src := 0; src < len(word); src++ {
-		if word[src] == '\\' {
-			if src+1 < len(word) {
-				word[dst] = word[src+1]
-				dst++
-				src++
-			}
-		} else {
+	for src := range word {
+		if word[src] != '\\' {
 			word[dst] = word[src]
 			dst++
 		}
@@ -703,6 +691,8 @@ func getParamConstraintType(constraintPart string) TypeConstraint {
 
 // CheckConstraint validates if a param matches the given constraint
 // Returns true if the param passes the constraint check, false otherwise
+//
+//nolint:errcheck // TODO: Properly check _all_ errors in here, log them or immediately return
 func (c *Constraint) CheckConstraint(param string) bool {
 	// First check if there's a custom constraint with the same name
 	// This allows custom constraints to override built-in constraints
@@ -749,74 +739,47 @@ func (c *Constraint) CheckConstraint(param string) bool {
 	case guidConstraint:
 		_, err = uuid.Parse(param)
 	case minLenConstraint:
-		data, errAtoi := strconv.Atoi(c.Data[0])
-		if errAtoi != nil {
-			return false
-		}
+		data, _ := strconv.Atoi(c.Data[0])
 
 		if len(param) < data {
 			return false
 		}
 	case maxLenConstraint:
-		data, errAtoi := strconv.Atoi(c.Data[0])
-		if errAtoi != nil {
-			return false
-		}
+		data, _ := strconv.Atoi(c.Data[0])
 
 		if len(param) > data {
 			return false
 		}
 	case lenConstraint:
-		data, errAtoi := strconv.Atoi(c.Data[0])
-		if errAtoi != nil {
-			return false
-		}
+		data, _ := strconv.Atoi(c.Data[0])
 
 		if len(param) != data {
 			return false
 		}
 	case betweenLenConstraint:
-		data, errAtoi := strconv.Atoi(c.Data[0])
-		if errAtoi != nil {
-			return false
-		}
-		data2, errAtoi := strconv.Atoi(c.Data[1])
-		if errAtoi != nil {
-			return false
-		}
+		data, _ := strconv.Atoi(c.Data[0])
+		data2, _ := strconv.Atoi(c.Data[1])
 		length := len(param)
 		if length < data || length > data2 {
 			return false
 		}
 	case minConstraint:
-		data, errAtoi := strconv.Atoi(c.Data[0])
-		if errAtoi != nil {
-			return false
-		}
+		data, _ := strconv.Atoi(c.Data[0])
 		num, err = strconv.Atoi(param)
 
 		if err != nil || num < data {
 			return false
 		}
 	case maxConstraint:
-		data, errAtoi := strconv.Atoi(c.Data[0])
-		if errAtoi != nil {
-			return false
-		}
+		data, _ := strconv.Atoi(c.Data[0])
 		num, err = strconv.Atoi(param)
 
 		if err != nil || num > data {
 			return false
 		}
 	case rangeConstraint:
-		data, errAtoi := strconv.Atoi(c.Data[0])
-		if errAtoi != nil {
-			return false
-		}
-		data2, errAtoi := strconv.Atoi(c.Data[1])
-		if errAtoi != nil {
-			return false
-		}
+		data, _ := strconv.Atoi(c.Data[0])
+		data2, _ := strconv.Atoi(c.Data[1])
 		num, err = strconv.Atoi(param)
 
 		if err != nil || num < data || num > data2 {
