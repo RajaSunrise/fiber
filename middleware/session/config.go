@@ -95,7 +95,6 @@ var ConfigDefault = Config{
 	KeyGenerator:   utils.SecureToken,
 	Extractor:      extractors.FromCookie("session_id"),
 	CookieSameSite: "Lax",
-	CookieHTTPOnly: true,
 }
 
 // DefaultErrorHandler logs the error and sends a 500 status code.
