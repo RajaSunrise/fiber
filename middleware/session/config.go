@@ -77,7 +77,7 @@ type Config struct {
 
 	// CookieHTTPOnly specifies if the session cookie should be HTTP-only.
 	//
-	// Optional. Default: false
+	// Optional. Default: true
 	CookieHTTPOnly bool
 
 	// CookieSessionOnly determines if the cookie should expire when the browser session ends.
@@ -95,6 +95,7 @@ var ConfigDefault = Config{
 	KeyGenerator:   utils.SecureToken,
 	Extractor:      extractors.FromCookie("session_id"),
 	CookieSameSite: "Lax",
+	CookieHTTPOnly: true,
 }
 
 // DefaultErrorHandler logs the error and sends a 500 status code.

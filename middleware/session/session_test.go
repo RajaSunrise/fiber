@@ -945,7 +945,7 @@ func Test_Session_Cookie(t *testing.T) {
 	// cookie should be set on Save ( even if empty data )
 	cookie := ctx.Response().Header.PeekCookie("session_id")
 	require.NotNil(t, cookie)
-	require.Regexp(t, `^session_id=[A-Za-z0-9\-_]{43}; max-age=\d+; path=/; SameSite=Lax$`, string(cookie))
+	require.Regexp(t, `^session_id=[A-Za-z0-9\-_]{43}; max-age=\d+; path=/; HttpOnly; SameSite=Lax$`, string(cookie))
 }
 
 // go test -run Test_Session_Cookie_SameSite

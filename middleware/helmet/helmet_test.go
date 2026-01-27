@@ -204,7 +204,12 @@ func Test_PermissionsPolicy(t *testing.T) {
 
 func Test_HSTSHeaders(t *testing.T) {
 	hstsAge := 60
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		TrustProxy: true,
+		TrustProxyConfig: fiber.TrustProxyConfig{
+			Proxies: []string{"0.0.0.0/0"},
+		},
+	})
 
 	app.Use(New(Config{HSTSMaxAge: hstsAge}))
 
@@ -217,7 +222,7 @@ func Test_HSTSHeaders(t *testing.T) {
 
 	ctx.Request.SetRequestURI("/")
 	ctx.Request.Header.SetMethod(fiber.MethodGet)
-	ctx.Request.Header.SetProtocol("https")
+	ctx.Request.Header.Set("X-Forwarded-Proto", "https")
 
 	handler(ctx)
 
@@ -227,7 +232,7 @@ func Test_HSTSHeaders(t *testing.T) {
 	ctx.Response.Reset()
 	ctx.Request.SetRequestURI("/")
 	ctx.Request.Header.SetMethod(fiber.MethodGet)
-	ctx.Request.Header.SetProtocol("http")
+	ctx.Request.Header.Set("X-Forwarded-Proto", "http")
 
 	handler(ctx)
 
@@ -236,7 +241,12 @@ func Test_HSTSHeaders(t *testing.T) {
 
 func Test_HSTSExcludeSubdomainsAndPreload(t *testing.T) {
 	hstsAge := 31536000
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		TrustProxy: true,
+		TrustProxyConfig: fiber.TrustProxyConfig{
+			Proxies: []string{"0.0.0.0/0"},
+		},
+	})
 
 	app.Use(New(Config{
 		HSTSMaxAge:            hstsAge,
@@ -253,7 +263,7 @@ func Test_HSTSExcludeSubdomainsAndPreload(t *testing.T) {
 
 	ctx.Request.SetRequestURI("/")
 	ctx.Request.Header.SetMethod(fiber.MethodGet)
-	ctx.Request.Header.SetProtocol("https")
+	ctx.Request.Header.Set("X-Forwarded-Proto", "https")
 
 	handler(ctx)
 
