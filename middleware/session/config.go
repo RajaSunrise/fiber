@@ -77,7 +77,7 @@ type Config struct {
 
 	// CookieHTTPOnly specifies if the session cookie should be HTTP-only.
 	//
-	// Optional. Default: true
+	// Optional. Default: false
 	CookieHTTPOnly bool
 
 	// CookieSessionOnly determines if the cookie should expire when the browser session ends.
